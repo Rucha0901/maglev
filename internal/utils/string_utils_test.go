@@ -96,3 +96,27 @@ func TestNaturalCompare(t *testing.T) {
 		})
 	}
 }
+
+func TestContainsLetterOrDigit(t *testing.T) {
+	tests := []struct {
+		name string
+		s    string
+		want bool
+	}{
+		{"empty string", "", false},
+		{"whitespace only", "   \t\n", false},
+		{"punctuation only", "---///@@@***", false},
+		{"ascii letters and digits", "Route101", true},
+		{"ascii digits only", "42", true},
+		{"mixed punctuation and letters", "/15-North/", true},
+		{"unicode letters", "Café", true},
+		{"unicode numbers", "１２３", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ContainsLetterOrDigit(tt.s)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
