@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"maglev.onebusaway.org/internal/app"
 	"maglev.onebusaway.org/internal/appconf"
+	"maglev.onebusaway.org/internal/clock"
 )
 
 func TestHealthHandlerWithNilApplication(t *testing.T) {
@@ -35,14 +36,18 @@ func TestHealthHandlerWithNilApplication(t *testing.T) {
 }
 
 func TestHealthHandlerReturnsOK(t *testing.T) {
+	mockTime := time.Date(2025, 6, 12, 12, 0, 0, 0, time.UTC)
+	mockClock := clock.NewMockClock(mockTime)
+
 	manager := newTestManagerNoData(t)
-	manager.SetFeedExpiresAtForTest(context.Background(), time.Now().Add(24*time.Hour))
+	manager.SetFeedExpiresAtForTest(context.Background(), mockTime.Add(24*time.Hour))
 
 	// Mark the manager as ready (simulating completed initialization)
 	manager.MarkReady()
 
 	app := &app.Application{
 		GtfsManager: manager,
+		Clock:       mockClock,
 		Config: appconf.Config{
 			RateLimit: 100,
 		},
@@ -69,13 +74,17 @@ func TestHealthHandlerReturnsOK(t *testing.T) {
 }
 
 func TestHealthHandlerReturnsExpired(t *testing.T) {
+	mockTime := time.Date(2025, 6, 12, 12, 0, 0, 0, time.UTC)
+	mockClock := clock.NewMockClock(mockTime)
+
 	manager := newTestManagerNoData(t)
-	manager.SetFeedExpiresAtForTest(context.Background(), time.Now().Add(-24*time.Hour))
+	manager.SetFeedExpiresAtForTest(context.Background(), mockTime.Add(-24*time.Hour))
 
 	manager.MarkReady()
 
 	app := &app.Application{
 		GtfsManager: manager,
+		Clock:       mockClock,
 		Config: appconf.Config{
 			RateLimit: 100,
 		},
@@ -107,6 +116,7 @@ func TestHealthHandlerStarting(t *testing.T) {
 
 	app := &app.Application{
 		GtfsManager: manager,
+		Clock:       clock.RealClock{},
 		Config: appconf.Config{
 			RateLimit: 100,
 		},
@@ -139,6 +149,7 @@ func TestHealthHandlerVerboseMode(t *testing.T) {
 
 	app := &app.Application{
 		GtfsManager: manager,
+		Clock:       clock.RealClock{},
 		Config: appconf.Config{
 			RateLimit: 100,
 		},
